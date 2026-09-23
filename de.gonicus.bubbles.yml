@@ -40,9 +40,7 @@ modules:
   - name: passt
     buildsystem: simple
     build-commands:
-      - make passt passt.avx2
-      - install -Dm755 passt /app/bin/passt
-      - install -Dm755 passt.avx2 /app/bin/passt.avx2
+      - make install prefix=${FLATPAK_DEST}
       - install -Dm644 LICENSES/GPL-2.0-or-later.txt /app/share/licenses/de.gonicus.bubbles/passt/GPL-2.0-or-later.txt
       - install -Dm644 LICENSES/BSD-3-Clause.txt /app/share/licenses/de.gonicus.bubbles/passt/BSD-3-Clause.txt
     sources:
