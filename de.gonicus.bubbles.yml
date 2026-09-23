@@ -1,0 +1,80 @@
+app-id: de.gonicus.bubbles
+runtime: org.gnome.Platform
+runtime-version: '51'
+sdk: org.gnome.Sdk
+command: bubbles
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+  - org.freedesktop.Sdk.Extension.llvm22
+
+finish-args:
+  - --socket=wayland
+  - --device=dri
+  - --device=kvm
+  - --share=network
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  no-debuginfo: true
+
+modules:
+  - name: crosvm
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/llvm22/bin
+      env:
+        CARGO_HOME: /run/build/crosvm/cargo
+    build-commands:
+      - cargo --offline build --release
+      - install -Dm755 target/release/crosvm /app/bin/crosvm
+      - install -Dm644 LICENSE /app/share/licenses/de.gonicus.bubbles/crosvm/LICENSE
+    sources:
+      - type: git
+        url: https://chromium.googlesource.com/crosvm/crosvm
+        commit: b6795499002ad04613263ae49173c7b6b474c6f8
+      - type: patch
+        paths:
+          - patches/crosvm/0000-display-backend-stub.patch
+          - patches/crosvm/0001-remove-wayland-display.patch
+      - crosvm-cargo-sources.json
+
+  - name: passt
+    buildsystem: simple
+    build-commands:
+      - make passt passt.avx2
+      - install -Dm755 passt /app/bin/passt
+      - install -Dm755 passt.avx2 /app/bin/passt.avx2
+      - install -Dm644 LICENSES/GPL-2.0-or-later.txt /app/share/licenses/de.gonicus.bubbles/passt/GPL-2.0-or-later.txt
+      - install -Dm644 LICENSES/BSD-3-Clause.txt /app/share/licenses/de.gonicus.bubbles/passt/BSD-3-Clause.txt
+    sources:
+      - type: archive
+        url: https://passt.top/passt/snapshot/passt-2026_05_07.1afd4ed.tar.gz
+        sha256: 4b5cb8482db1a861bce36dafd4ba606565e1e294079c81d1e82e28f11e7a1f30
+      - type: patch
+        paths:
+          - patches/passt/0000-tolerate-denied-namespaces.patch
+          - patches/passt/0001-require-default-route-for-template.patch
+
+  - name: bubbles
+    buildsystem: simple
+    build-options:
+      env:
+        CARGO_HOME: /run/build/bubbles/cargo
+    subdir: bubbles-app
+    build-commands:
+      - cargo --offline build --release
+      - install -Dm755 target/release/bubbles /app/bin/bubbles
+      - install -Dm644 de.gonicus.bubbles.desktop /app/share/applications/de.gonicus.bubbles.desktop
+      - install -Dm644 de.gonicus.bubbles.metainfo.xml /app/share/metainfo/de.gonicus.bubbles.metainfo.xml
+      - install -Dm644 de.gonicus.bubbles.svg /app/share/icons/hicolor/scalable/apps/de.gonicus.bubbles.svg
+      - install -Dm644 ../LICENSE /app/share/licenses/de.gonicus.bubbles/bubbles/LICENSE
+      - install -Dm644 CROSVM_CARGO_DEPENDENCIES_LICENSES.html /app/share/licenses/de.gonicus.bubbles/crosvm/THIRD_PARTY_LICENSES.html
+      - install -Dm644 BUBBLES_CARGO_DEPENDENCIES_LICENSES.html /app/share/licenses/de.gonicus.bubbles/bubbles/THIRD_PARTY_LICENSES.html
+    sources:
+      - type: git
+        url: https://github.com/gonicus/bubbles.git
+        tag: app-v1.2.7
+        commit: 0ba757be78419ba94cc51f480754750807d01fab
+        x-checker-data:
+          type: git
+          tag-pattern: ^app-v([0-9]+\.[0-9]+(\.[0-9]+)?)$
+      - cargo-sources.json

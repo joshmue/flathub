@@ -1,0 +1,15 @@
+diff --git a/netlink.c b/netlink.c
+index 8d20dbb..fc50d3b 100644
+--- a/netlink.c
++++ b/netlink.c
+@@ -449,6 +449,10 @@ int nl_route_get_def(int s, unsigned int ifi, sa_family_t af, void *gw)
+ 			found = true;
+ 		}
+ 	}
++
++	if (status >= 0 && !found)
++		return -ENODATA;
++
+ 	return status;
+ }
+ 
